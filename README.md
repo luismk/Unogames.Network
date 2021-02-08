@@ -3,8 +3,8 @@
 asynchronous socket server & client C#
 
  * [Examples](#examples)
-    * [Example: TCP Socket server](#example-tcp-socket-server)
-    * [Example: TCP Socket client](#example-tcp-socket-client)
+    * [Example: TCP Socket Server](#example-tcp-socket-server)
+    * [Example: TCP Socket Client](#example-tcp-socket-client)
     
     
     
@@ -113,7 +113,7 @@ namespace Pangya_LoginServer
 }
 ```
 
-## Example: Create Socket Client
+## Example: Socket Client
 Here comes the example of the TCP chat client. It connects to the TCP chat
 server and allows to send message to it and receive new messages.
 
