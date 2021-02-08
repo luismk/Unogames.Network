@@ -3,8 +3,8 @@
 asynchronous socket server & client C#
 
  * [Examples](#examples)
-    * [Example: TCP Socket server](#example-tcp-server-socket)
-    * [Example: TCP Socket client](#example-tcp-client-socket)
+    * [Example: TCP Socket server](#example-tcp-socket-server)
+    * [Example: TCP Socket client](#example-tcp-socket-client)
     
     
     
