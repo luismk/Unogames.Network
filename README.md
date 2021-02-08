@@ -85,30 +85,47 @@ namespace Pangya_LoginServer
             }
 
             var server = new ServerTest(Config, "PangYa_LoginServer");
-            server.Start();
+            if (server.IsRunning == false)
+            {
+                Console.WriteLine("Use the commands: ");
+                Console.WriteLine(Environment.NewLine);
+                Console.WriteLine(" 'start' to start the server");
+                Console.WriteLine(" 'stop' to stop the server");
+                Console.WriteLine(" 'restart ' to restart the server");
+                Console.WriteLine(Environment.NewLine);
+            }
             for (; ; )
             {
-                string line = Console.ReadLine();
-                if (string.IsNullOrEmpty(line))
-                    break;
-
-                // Restart the server
-                if (line == "!")
+                var command = Console.ReadLine().Split(new char[] { ' ' }, 2);
+                switch (command[0].ToLower())
                 {
-                    Console.Write("Server restarting...");
-                    server.Restart();
-                    Console.WriteLine("Done!");
-                    continue;
+                    case "": break;
+                    case "stop":
+                        {
+                            Console.Write("Server stopping...");
+                            server.Stop();
+                            Console.WriteLine("Done!");
+                        }
+                        break;
+                    case "start":
+                        server.Start();
+                        break;
+                    case "cls":
+                    case "clear":
+                        {
+                            Console.Clear();
+                        }
+                        break;
+                    case "restart":
+                        Console.Write("Server restarting...");
+                        server.Restart();
+                        Console.WriteLine("Done!");
+                        break;
+                    default:
+                        Console.WriteLine("command not found");
+                        break;
                 }
-
-                // Multicast admin message to all sessions
-                line = "(admin) " + line;
-                server.SendAll(line);
             }
-            // Stop the server
-            Console.Write("Server stopping...");
-            server.Stop();
-            Console.WriteLine("Done!");
     }
 }
 ```
@@ -127,110 +144,34 @@ namespace Pangya_LoginServer
 {
     public class PlayerSession : Session
     {
-        public PangyaBinaryWriter Response { get; set; }
-        public PlayerSession(Socket socket) : base(socket) { Response = new PangyaBinaryWriter(); }
-
+        public PlayerSession(Socket socket) : base(socket) {}
+        
+        //send a welcome message to the connected client
         protected override void OnConnected()
         {
             Console.WriteLine($"Player session with Id {RemoteEndPoint} connected!");
 
             // Send invite message
-            byte[] message = new byte[]
-                {0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 1, 0x00, 0x00, 0x00, 0x75, 0x27, 0x00, 0x00};
+            string message = $"bem vindo ! {RemoteEndPoint}";
             SendAsync(message);
         }
-
-        public async Task SendResponse()
-        {
-            var data = Response.GetBytes();
-            PangyaAPI.Crypt.Cryptor.Server_Packet(ref data, 1, 0);
-            Response.Clear();
-            await SendPacket(data);
-        }
-
-        Task<int> SendToAsync(byte[] buffer)
-        {
-            return Task.Factory.FromAsync(
-                Socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, null, Socket),
-                Socket.EndSend);
-        }
-
-        public async Task SendPacket(byte[] message)
-        {
-            await SendToAsync(message);
-        }
-
+        
+        //a disconnection notice it will be here
         protected override void OnDisconnected()
         {
             Console.WriteLine($"Player session with Id {RemoteEndPoint} disconnected!");
         }
-
+        
+        //try to deal with the message received here
         protected override void OnReceived(byte[] message, long offset, long size)
         {
-            Task.Run(() =>
-            {
-                try
-                {
-                    var Id = BitConverter.ToInt16(new byte[] { message[5], message[6] }, 0);
-                    switch (Id)
-                    {
-                        case 0x01:
-                            {
-                                #pragma warning disable 4014
-                                Login();
-                                #pragma warning restore 4014
-
-                            }
-                            break;
-                    }
-                }
-                catch (Exception exception)
-                {
-                    Console.WriteLine(exception.ToString());
-                }
-            });
-
+       
         }
-
+        
+        //error by client-connection
         protected override void OnError(SocketError error)
         {
             Console.WriteLine($"Player session caught an error with code {error}");
-        }
-
-
-        public async Task Login()
-        {
-            Response.WriteUInt16(0x0010);
-            Response.WritePStr("7430F52");//chave de autenficacao
-            await SendResponse();
-
-            Response.Write(new byte[] { 0x06, 0x00 });
-            Response.WriteStr("Pangya 1!", 64);
-            Response.WriteStr("Pangya 2!", 64);
-            Response.WriteStr("Pangya 3!", 64);
-            Response.WriteStr("Pangya 4!", 64);
-            Response.WriteStr("Pangya 5!", 64);
-            Response.WriteStr("Pangya 6!", 64);
-            Response.WriteStr("Pangya 7!", 64);
-            Response.WriteStr("Pangya 8!", 64);
-            Response.WriteStr("Pangya 9!", 64);
-            await SendResponse();
-
-            Response.Write(new byte[] { 0x02, 0x00 });
-            Response.WriteByte((byte)1);//count servers 
-            Response.WriteStr("PangYa S7", 40);
-            Response.WriteInt32(20201);//serverID
-            Response.WriteInt32(2000);//max user
-            Response.WriteInt32(1);//players online
-            Response.WriteStr("127.0.0.1", 18);//ip server
-            Response.WriteInt32(7997);//port 
-            Response.WriteInt32(2048);//property
-            Response.WriteUInt32(0); // Angelic Number
-            Response.WriteUInt16((ushort)0);//Flag event
-            Response.WriteUInt16(0);//unknown
-            Response.WriteInt32(100);//pang rate?
-            Response.WriteUInt16(0);//Icon Server    
-            await SendResponse();
         }
     }
 }
