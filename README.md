@@ -4,7 +4,7 @@ asynchronous socket server & client C#
 
  * [Examples](#examples)
     * [Example: TCP Socket Server](#example-tcp-socket-server)
-    * [Example: TCP Socket Client](#example-tcp-socket-client)
+    * [Example: TCP Socket Client](#example-socket-client)
     
     
     
